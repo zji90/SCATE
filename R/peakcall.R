@@ -11,7 +11,7 @@
 #' @import GenomicRanges
 #' @author Zhicheng Ji, Weiqiang Zhou, Hongkai Ji <zji4@@zji4.edu>
 #' @examples
-#' peakcall(SCATE(GRanges(seqnames="chr1",IRanges(start=1:100+1e6,end=1:100+1e6))))
+#' peakcall(SCATE(GRanges(seqnames="chr1",IRanges(start=1:100+1e6,end=1:100+1e6)),clunum=5000,genome='mm10'))
 
 peakcall <- function(res,flank=1,fdrcut=1e-5) {
       set.seed(12345)
