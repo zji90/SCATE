@@ -5,7 +5,8 @@
 #' This function takes as input a list of bam files. It then read in the bam files, cluster cells, and performs SCATE for each cell cluster
 #' @param bamfile Character vector of bam files to be processed
 #' @param genome Character variable of either "hg19" or "mm10".
-#' @param clunum Numeric variable giving the number of clusters. If NULL the cluster number will be determined automatically
+#' @param cellclunum Numeric variable giving the number of cell clusters when clustering cells. If NULL the cluster number will be determined automatically.
+#' @param CREclunum Numeric variable giving the number of CRE clusters when running SCATE. If NULL the cluster number will be determined automatically.
 #' @param ncores Numeric variable of number of cores to use. If NULL, the maximum number of cores is used.
 #' @param perplexity Numeric variable specifying perplexity of tSNE. Reduce perplexity when sample size is small.
 #' @param datapath Character variable of the path to the customized database (eg myfolder/database.rds). The database can be made using 'makedatabase' function. If not null, 'genome' is ignored.
@@ -15,13 +16,13 @@
 #' @author Zhicheng Ji, Weiqiang Zhou, Hongkai Ji <zji4@@zji4.edu>
 #' @examples
 #' f <- list.files(paste0(system.file(package="SCATE"),"/extdata/example"),full.names = T)
-#' SCATEpipeline(f,genome="hg19",perplexity=5)
+#' SCATEpipeline(f,genome="hg19",CREclunum=5000,perplexity=5)
 
-SCATEpipeline <- function(bamfile,genome='hg19',clunum=NULL,datapath=NULL,ncores=detectCores(),perplexity=30) {
+SCATEpipeline <- function(bamfile,genome='hg19',cellclunum=NULL,CREclunum=NULL,datapath=NULL,ncores=detectCores(),perplexity=30) {
       satac <- sapply(sapply(bamfile,readGAlignmentPairs),GRanges)
       suppressWarnings(satac <- satacprocess(satac))
-      cellclu <- cellcluster(satac,genome=genome,perplexity=perplexity,clunum=clunum,datapath=datapath)
-      SCATEres <- SCATE(satac,genome=genome,cluster=cellclu$cluster,datapath=datapath,ncores=ncores)
+      cellclu <- cellcluster(satac,genome=genome,perplexity=perplexity,clunum=cellclunum,datapath=datapath)
+      SCATEres <- SCATE(satac,genome=genome,cluster=cellclu$cluster,clunum=CREclunum,datapath=datapath,ncores=ncores)
       peakres <- peakcall(SCATEres)
       list(cellcluster=cellclu,SCATE=SCATEres,peak=peakres)
 }

@@ -11,11 +11,11 @@
 #' @import GenomicRanges
 #' @author Zhicheng Ji, Weiqiang Zhou, Hongkai Ji <zji4@@zji4.edu>
 #' @examples
-#' satacprocess(list(cell1=GRanges(seqnames="chr1",IRanges(start=1:100+1e6,end=1:100+1e6)),cell2=GRanges(seqnames="chr2",IRanges(start=1:100+1e6,end=1:100+1e6))),libsizefilter=10)
+#' satacprocess(list(cell1=GRanges(seqnames="chr1",IRanges(start=1:100+1e6,end=1:100+1e6)),cell2=GRanges(seqnames="chr2",IRanges(start=1:100+1e6,end=1:100+1e6))),type='gr',libsizefilter=10)
 
 satacprocess <- function(input,type='bam',libsizefilter=1000) {
       if (type=='bam') {
-            satac <- sapply(sapply(bamlist,readGAlignmentPairs),GRanges)
+            satac <- sapply(sapply(input,readGAlignmentPairs),GRanges)
       } else {
             satac <- input
       }
