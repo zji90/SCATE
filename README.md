@@ -47,8 +47,11 @@ After the installation process, go to 'Packages & Data' menu, go to 'Package Ins
 If there is any problem with the installation process, please make sure you have R version at least 3.5.x and you have installed Rtools (Windows users) or clang (mac users). If the problem still occurs, please contact the author (see below)
 
 ## User Manual
-Check the following page for user manual:
+Check the following page for PDF version of the user manual:
 https://github.com/zji90/SCATE/raw/master/inst/doc/SCATE.pdf
+
+Check below link for the Rnw version of the user manual. The code can be easily copied from the Rnw file.
+https://github.com/zji90/SCATE/blob/master/vignettes/SCATE.Rnw
 
 ## Contact the Author
 Author: Zhicheng Ji, Hongkai Ji

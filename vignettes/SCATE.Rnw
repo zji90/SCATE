@@ -39,14 +39,15 @@ options(warn=-1)
 suppressMessages(library(SCATE))
 set.seed(12345)
 # set up locations to bam files
-bamlist <- list.files(paste0(system.file(package="SCATE")
-,"/extdata/example"),full.names = T)
+bamlist <- list.files(paste0(system.file(package="SCATE"),"/extdata/example"),full.names = T)
 head(bamlist)
 @
 
 SCATE comes with a built in function to perform cell clustering. Users can also prepare their own clustering results. See Section Cell Clustering.
 
 Users can also rebuild the SCATE database with their own bulk DNase-seq or list of CRE of interest. See Section Build user's own database.
+
+SCATE also supports peak calls instead of bam files as input data format. In this case, the input should be a data frame or list of data frames of scATAC-seq peaks. For each data frame, first column is chromsome name, second column is start site, third column is end site, and fourth column is the number of reads of the peak. Currently \texttt{cellcluster} and \texttt{SCATE} supports peak calls as input. Please refer to the manual page of \texttt{cellcluster} and \texttt{SCATE} functions for details.
 
 \section{Read in and Preprocessing Data}
 
@@ -62,10 +63,7 @@ length(satac)
 satac[[1]]
 @
 
-Users can also use a list of GRanges object as input to SCATE by specifying \texttt{type='gr'}, for example:
-<<eval=FALSE>>=      
-satac <- satacprocess(input=grlist,type='gr',libsizefilter=1000)
-@
+Users can also use a list of GRanges object as input to SCATE by specifying \texttt{type='gr'}.
 
 For the purpose of demonstration, we shorten the names of satac.
 <<>>=
@@ -106,9 +104,9 @@ ggplot(plotdata,aes(x=tSNE1,y=tSNE2,col=Cluster)) + geom_point()
 
 \section{Run SCATE}
 
-The function \texttt{SCATE} will reconstruct signals for individual CREs. For example, below code performs SCATE using the scATAC-seq data and clustering results from the previous clustering step:
+The function \texttt{SCATE} will reconstruct signals for individual CREs. For example, below code performs SCATE using the scATAC-seq data and clustering results from the previous clustering step. For demonstration purpose, here number of CRE clusters is set to be 5000 (clunum=5000) to allow faster speed. In real application, clunum is recommended to set to NULL so SCATE will automatically choose the optimal number of clusters.
 <<>>=      
-res <- SCATE(satac,genome="hg19",cluster=cluster,clusterid=NULL,ncores=10,verbose=TRUE)
+res <- SCATE(satac,genome="hg19",cluster=cluster,clusterid=NULL,clunum=5000,ncores=10,verbose=TRUE)
 # check the 10000-10005th row of the matrix
 res[10000:10005,]
 @
@@ -126,7 +124,7 @@ names(usercellcluster) <- names(satac)
 usercellcluster
 @
 <<eval=FALSE>>=    
-userclusterres <- SCATE(satac,genome="hg19",cluster=usercellcluster)
+userclusterres <- SCATE(satac,genome="hg19",cluster=usercellcluster,clunum=5000,ncores=10,verbose=TRUE)
 @
 
 Function \texttt{extractfeature} can be used to extract signals for a subset of genomic region of interest. For example if we want to extract signal for all bins that are within chromosome 5 50000-50300 and 50700-51000, we can first prepare the following region data:
@@ -170,7 +168,7 @@ write.table(peakres[[1]],file='your file.bed',sep='\t',quote=F,col.names = F,row
 \section{Wrapper function}      
 The whole process of reading in bam, clustering cell, and performing SCATE is included in the \texttt{SCATEpipeline} function using following wrapper function of SCATE pipeline:
 <<eval=FALSE>>=    
-piperes <- SCATEpipeline(bamlist,genome="hg19",clunum=2,perplexity=5,ncores=10)
+piperes <- SCATEpipeline(bamlist,genome="hg19",cellclunum=2,CREclunum=5000,perplexity=5,ncores=10)
 # get the cell cluster results, same as calling 'cellcluster' function.
 cluster <- piperes[['cellcluster']]
 # get the SCATE outputs, same as calling 'SCATE' function.
@@ -207,15 +205,15 @@ Here, \texttt{datapath} is the path to the data package folder (e.g. myfolder/hg
 The function will generate a database file in 'savepath', which can then be passed to SCATE main function. See the manual page of SCATE function for how to include user's own database. The function will take around 1-2 days to finish.
 
 
-\section{Build database for new species}
-Users can also build database for scratch using bulk samples from a new species. This can be easily done with the following command:
+\section{Build database from scratch}
+Users can also build database from scratch using bulk samples or pooled single-cell ATAC-seq samples (pseudobulks). This can be easily done with the following command:
 <<eval=FALSE>>=    
 makedatabase(datapath=NULL,savepath,bamfile=bamfile,cre=cre,genomerange=genomerange)
 @
 
 \texttt{savepath} is the path to save the generated database. e.g. myfolder/database.rds.
 
-\texttt{bamfile} is the location of bulk DNase-seq bamfiles. The format is the same as \texttt{bamlist}
+\texttt{bamfile} is the location of bulk DNase-seq bamfiles or pooled single-cell ATAC-seq bam files. The format is the same as \texttt{bamlist}
 
 \texttt{cre} is a dataframe of new CRE sites to be added to the database. First column: chromosome name. Second column: start position. Third column: end position. The format is the same as \texttt{region} argument in function \texttt{extractfeature}.
 
