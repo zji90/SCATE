@@ -9,7 +9,8 @@
 #' @param genome Character variable of either "hg19" or "mm10". Default is 'hg19'.
 #' @param cluster Numeric vector specifying the cluster of cells. Needs to be named and include all cells in satac. If NULL, SCATE will be run on all cells in satac.
 #' @param clusterid Numeric number specifying the single cluster to run SCATE. If NULL SCATE will be run on all clusters. Ignored if cluster is NULL. The cluster id must be included in variable 'cluster'.
-#' @param CREclunum Numeric value specifying number of CRE clusters. If NULL, SCATE automatically chooses number of CRE clusters.
+#' @param clunum Numeric value specifying number of CRE clusters. If NULL, SCATE automatically chooses number of CRE clusters.
+#' @param addrowname Either TRUE or FALSE. If TRUE, row names will be added to the final output indicating the genomic position of each bin.
 #' @param datapath Character variable of the path to the customized database (eg myfolder/database.rds). The database can be made using 'makedatabase' function. If not null, 'genome' is ignored.
 #' @param ncores Numeric variable of number of cores to use. If NULL, the maximum number of cores is used.
 #' @param verbose Either TRUE or FALSE. If TRUE, progress will be displayed.
@@ -18,13 +19,13 @@
 #' @import GenomicAlignments parallel splines2 xgboost
 #' @author Zhicheng Ji, Weiqiang Zhou, Hongkai Ji <zji4@@zji4.edu>
 #' @examples
-#' SCATE(GRanges(seqnames="chr1",IRanges(start=seq_len(100)+1e6,end=seq_len(100)+1e8)),clunum=5000,type='reads',genome="mm10",ncores=8) # Reads as input, setting CRE cluster number as 5000 to increase speed
+#' SCATE(GRanges(seqnames="chr1",IRanges(start=seq_len(100)+1e6,end=seq_len(100)+1e8)),clunum=5000,type='reads',genome="mm10",addrowname=FALSE,ncores=10) # Reads as input, setting CRE cluster number as 5000 and addrowname=FALSE to increase speed
 #' \dontrun{
-#' SCATE(satac=data.frame(seqnames="chr1",start=seq_len(100)+1e6,end=seq_len(100)+1e8,count=1),clunum=5000,type='peaks',genome="mm10",ncores=8) # Peak as input, peakOverlapMethod=full
-#' SCATE(satac=data.frame(seqnames="chr1",start=seq_len(100)+1e6,end=seq_len(100)+1e6,count=1),clunum=5000,type='peaks',peakOverlapMethod='middle',genome="mm10",ncores=8) # Peak as input, peakOverlapMethod=middle
+#' SCATE(satac=data.frame(seqnames="chr1",start=seq_len(100)+1e6,end=seq_len(100)+1e8,count=1),clunum=5000,type='peaks',genome="mm10",addrowname=FALSE,ncores=10) # Peak as input, peakOverlapMethod=full
+#' SCATE(satac=data.frame(seqnames="chr1",start=seq_len(100)+1e6,end=seq_len(100)+1e6,count=1),clunum=5000,type='peaks',peakOverlapMethod='middle',genome="mm10",addrowname=FALSE,ncores=10) # Peak as input, peakOverlapMethod=middle
 #' }
 
-SCATE <- function(satac,type='reads',peakOverlapMethod = 'full',genome='hg19',cluster=NULL,clusterid=NULL,clunum=NULL,datapath=NULL,ncores=detectCores(),verbose=TRUE) {
+SCATE <- function(satac,type='reads',peakOverlapMethod = 'full',genome='hg19',cluster=NULL,clusterid=NULL,clunum=NULL,addrowname=TRUE,datapath=NULL,ncores=detectCores(),verbose=TRUE) {
       if (Sys.info()[['sysname']]=='Windows') {
             message('Parallel is disabled for Windows. Running with one core')
             ncores <- 1
@@ -37,8 +38,6 @@ SCATE <- function(satac,type='reads',peakOverlapMethod = 'full',genome='hg19',cl
       gr <- loaddata$gr
       SCATEsingle <- function(satac,genome='hg19',datapath=NULL,ncores=detectCores()) {
             options(scipen=999)
-            set.seed(12345)
-            
             if (verbose) {
                   print('Preparing data')      
             }
@@ -157,7 +156,6 @@ SCATE <- function(satac,type='reads',peakOverlapMethod = 'full',genome='hg19',cl
             if (verbose) {
                   print('Fitting model')      
             }
-            clunum <- NULL
             if (is.null(clunum)) {
                   cluster <- loaddata$cluster[,ncol(loaddata$cluster)]
                   spclu <- split(1:length(cluster),cluster)
@@ -165,7 +163,6 @@ SCATE <- function(satac,type='reads',peakOverlapMethod = 'full',genome='hg19',cl
                   targetcluid <- which(tabclu >= 10)
                   targetid <- unlist(spclu[targetcluid])
                   if (length(targetid) > 10000) {
-                        set.seed(12345)
                         targetid <- sample(targetid,10000) 
                   }
                   loglike <- sapply(allclunum,function(clunum) {
@@ -197,31 +194,26 @@ SCATE <- function(satac,type='reads',peakOverlapMethod = 'full',genome='hg19',cl
                   },mc.cores=ncores))
                   crefeature <- m+s*delta[cluster]
             }
-            returncreonly <- F
-            if (returncreonly) {
-                  pmax(0,crefeature)
-            } else {
-                  excid <- loaddata$excid
-                  excms <- loaddata$excms
-                  excm <- excms$m
-                  excs <- excms$s
-                  if (type=='reads') {
-                        exccount <- countOverlaps(gr[excid],satac)
-                  } else if (type=='peaks') {
-                        o <- as.matrix(findOverlaps(gr[excid],peak))
-                        exccount <- rep(0,length(excid))
-                        exccount[o[,1]] <- satac[o[,2],4]
-                  }
-                  logcount <- log2(count + 1)
-                  logexccount <- log2(exccount + 1)
-                  
-                  mod <- xgboost(cbind(m=m,logcount=logcount,s=s),crefeature,nrounds=50,verbose=F)
-                  predfeature <- predict(mod,cbind(m=excm,logcount=logexccount,s=excs))
-                  fullfeature <- rep(0,length(gr))
-                  fullfeature[id] <- crefeature
-                  fullfeature[excid] <- predfeature
-                  pmax(0,fullfeature)
+            excid <- loaddata$excid
+            excms <- loaddata$excms
+            excm <- excms$m
+            excs <- excms$s
+            if (type=='reads') {
+                  exccount <- countOverlaps(gr[excid],satac)
+            } else if (type=='peaks') {
+                  o <- as.matrix(findOverlaps(gr[excid],peak))
+                  exccount <- rep(0,length(excid))
+                  exccount[o[,1]] <- satac[o[,2],4]
             }
+            logcount <- log2(count + 1)
+            logexccount <- log2(exccount + 1)
+            
+            mod <- xgboost(cbind(m=m,logcount=logcount,s=s),crefeature,nrounds=50,verbose=F)
+            predfeature <- predict(mod,cbind(m=excm,logcount=logexccount,s=excs))
+            fullfeature <- rep(0,length(gr))
+            fullfeature[id] <- crefeature
+            fullfeature[excid] <- predfeature
+            pmax(0,fullfeature)
       }
       if (is.null(cluster)) {
             res <- matrix(SCATEsingle(satac,genome=genome,datapath=datapath,ncores=ncores),ncol=1)
@@ -241,6 +233,8 @@ SCATE <- function(satac,type='reads',peakOverlapMethod = 'full',genome='hg19',cl
       if (verbose) {
             print('Generating results')      
       }
-      row.names(res) <- sprintf('%s_%s_%s',as.character(seqnames(gr)),start(gr),end(gr))
+      if (addrowname) {
+            row.names(res) <- sprintf('%s_%s_%s',as.character(seqnames(gr)),start(gr),end(gr))
+      }
       res
 }
