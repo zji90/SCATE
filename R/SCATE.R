@@ -10,7 +10,6 @@
 #' @param cluster Numeric vector specifying the cluster of cells. Needs to be named and include all cells in satac. If NULL, SCATE will be run on all cells in satac.
 #' @param clusterid Numeric number specifying the single cluster to run SCATE. If NULL SCATE will be run on all clusters. Ignored if cluster is NULL. The cluster id must be included in variable 'cluster'.
 #' @param clunum Numeric value specifying number of CRE clusters. If NULL, SCATE automatically chooses number of CRE clusters.
-#' @param addrowname Either TRUE or FALSE. If TRUE, row names will be added to the final output indicating the genomic position of each bin.
 #' @param datapath Character variable of the path to the customized database (eg myfolder/database.rds). The database can be made using 'makedatabase' function. If not null, 'genome' is ignored.
 #' @param ncores Numeric variable of number of cores to use. If NULL, the maximum number of cores is used.
 #' @param verbose Either TRUE or FALSE. If TRUE, progress will be displayed.
@@ -20,13 +19,13 @@
 #' @author Zhicheng Ji, Weiqiang Zhou, Hongkai Ji <zji4@@zji4.edu>
 #' @examples
 #' set.seed(12345)
-#' SCATE(GRanges(seqnames="chr1",IRanges(start=seq_len(100)+1e6,end=seq_len(100)+1e8)),clunum=5000,type='reads',genome="mm10",addrowname=FALSE,ncores=10) # Reads as input, setting CRE cluster number as 5000 and addrowname=FALSE to increase speed
+#' SCATE(GRanges(seqnames="chr1",IRanges(start=seq_len(100)+1e6,end=seq_len(100)+1e8)),clunum=5000,type='reads',genome="mm10",ncores=10) # Reads as input, setting CRE cluster number as 5000 to increase speed
 #' \dontrun{
-#' SCATE(satac=data.frame(seqnames="chr1",start=seq_len(100)+1e6,end=seq_len(100)+1e8,count=1),clunum=5000,type='peaks',genome="mm10",addrowname=FALSE,ncores=10) # Peak as input, peakOverlapMethod=full
-#' SCATE(satac=data.frame(seqnames="chr1",start=seq_len(100)+1e6,end=seq_len(100)+1e6,count=1),clunum=5000,type='peaks',peakOverlapMethod='middle',genome="mm10",addrowname=FALSE,ncores=10) # Peak as input, peakOverlapMethod=middle
+#' SCATE(satac=data.frame(seqnames="chr1",start=seq_len(100)+1e6,end=seq_len(100)+1e8,count=1),clunum=5000,type='peaks',genome="mm10",ncores=10) # Peak as input, peakOverlapMethod=full
+#' SCATE(satac=data.frame(seqnames="chr1",start=seq_len(100)+1e6,end=seq_len(100)+1e6,count=1),clunum=5000,type='peaks',peakOverlapMethod='middle',genome="mm10",ncores=10) # Peak as input, peakOverlapMethod=middle
 #' }
 
-SCATE <- function(satac,type='reads',peakOverlapMethod = 'full',genome='hg19',cluster=NULL,clusterid=NULL,clunum=NULL,addrowname=TRUE,datapath=NULL,ncores=detectCores(),verbose=TRUE) {
+SCATE <- function(satac,type='reads',peakOverlapMethod = 'full',genome='hg19',cluster=NULL,clusterid=NULL,clunum=NULL,datapath=NULL,ncores=detectCores(),verbose=TRUE) {
       if (Sys.info()[['sysname']]=='Windows') {
             message('Parallel is disabled for Windows. Running with one core')
             ncores <- 1
@@ -234,8 +233,6 @@ SCATE <- function(satac,type='reads',peakOverlapMethod = 'full',genome='hg19',cl
       if (verbose) {
             print('Generating results')      
       }
-      if (addrowname) {
-            row.names(res) <- sprintf('%s_%s_%s',as.character(seqnames(gr)),start(gr),end(gr))
-      }
+      row.names(res) <- sprintf('%s_%s_%s',as.character(seqnames(gr)),start(gr),end(gr))
       res
 }
