@@ -1,0 +1,17 @@
+Package: SCATE
+Type: Package
+Title: SCATE: Single-cell ATAC-seq Signal Extraction and Enhancement
+Version: 1.0
+Date: 2018-12-24
+Author: Zhicheng Ji, Weiqiang Zhou, Hongkai Ji
+Maintainer: Zhicheng Ji <zji4@jhu.edu>
+Description: SCATE is a software tool for extracting and enhancing the sparse and discrete Single-cell ATAC-seq Signal.
+License: GPL(>=2)
+VignetteBuilder: knitr
+Encoding: UTF-8
+Remotes: bioc::3.8/GenomicAlignments
+Depends: GenomicAlignments, GenomicRanges, Rtsne, mclust, parallel,
+        preprocessCore, splines, splines2, xgboost, R(>= 2.10.0)
+RoxygenNote: 6.1.1
+NeedsCompilation: no
+Packaged: 2019-10-10 13:54:27 UTC; zhichengji

@@ -1,0 +1,248 @@
+%\VignetteIndexEntry{Single-cell ATAC-seq Signal Extraction and Enhancement with SCATE}
+%\VignetteDepends{} 
+%\VignetteEngine{knitr::knitr}
+%\VignettePackage{SCATE}
+
+\documentclass[10pt,oneside]{article}
+\usepackage[utf8]{inputenc}
+\setlength\parindent{0pt}
+
+\newcommand{\thetitle}{Single-cell ATAC-seq Signal Extraction and Enhancement with SCATE}
+
+\title{\textsf{\textbf{\thetitle}}}
+\author{Zhicheng Ji\\[1em]Johns Hopkins University,\\ Baltimore, Maryland, USA\\
+      \texttt{zji4@jhu.edu} \and
+      Weiqiang Zhou\\[1em]Johns Hopkins University,\\ Baltimore, Maryland, USA\\
+      \texttt{wzhou14@jhu.edu} \and
+      Hongkai Ji\\[1em]Johns Hopkins University,\\ Baltimore, Maryland, USA\\
+      \texttt{hji@jhsph.edu}}
+
+\begin{document}
+
+\maketitle
+
+\tableofcontents
+
+\section{Introductions}
+Single-cell sequencing assay for transposase-accessible chromatin (scATAC-seq) is a new technology for measuring genome-wide regulatory element activities in single cells. With the ability to analyze cells’ distinct behaviors in a heterogeneous cell population, this technology is rapidly transforming biomedical research. Data produced by scATAC-seq are highly sparse and discrete. Existing computational methods typically use these data to analyze regulatory pathway activities in single cells. They cannot accurately measure activities of individual cis-regulatory elements (CREs) due to data sparsity.
+SCATE is a new statistical framework for analyzing scATAC-seq data. SCATE adaptively integrates information from co-activated CREs, similar cells, and publicly available regulome data to substantially increase the accuracy for estimating activities of individual CREs. We show that one can use SCATE to identify cell subpopulations and then accurately reconstruct CRE activities of each subpopulation. The reconstructed signals are accurate even for cell subpopulations consisting of only a few cells, and they significantly improve prediction of transcription factor binding sites. The accurate CRE-level signal reconstruction makes SCATE an unique tool for analyzing regulatory landscape of a heterogeneous cell population using scATAC-seq data.
+
+The main functions of SCATE is demonstrated using the following example of 10 GM12878 and 10 K562 scATAC-seq samples.
+
+\section{Data preparation}
+
+The first input of SCATE is a list of aligned bam files for scATAC-seq sample. Each single cell should have one separate bam file. One needs to compile a list that includes the location to each bam file. The easist way is to put all bam files in one folder and use \texttt{list.files} function to get all locations. Below shows an example where \texttt{bamlist} stores the locations to bam files. Alternately users can also use a list of GRanges object as input to SCATE. See section below.
+
+<<>>=
+# load in SCATE
+options(warn=-1)
+suppressMessages(library(SCATE))
+set.seed(12345)
+# set up locations to bam files
+bamlist <- list.files(paste0(system.file(package="SCATE")
+,"/extdata/example"),full.names = T)
+head(bamlist)
+@
+
+SCATE comes with a built in function to perform cell clustering. Users can also prepare their own clustering results. See Section Cell Clustering.
+
+Users can also rebuild the SCATE database with their own bulk DNase-seq or list of CRE of interest. See Section Build user's own database.
+
+\section{Read in and Preprocessing Data}
+
+The function \texttt{satacprocess} reads bam files into R as a list of GRanges object. It transforms the reads into the midpoint of the reads (e.g. read chr1:100-150 will be transformed into chr1:125-125). scATAC-seq samples with library size smaller than \texttt{libsizefilter} (here is 1000) will be discarded.
+
+Here we run \texttt{satacprocess} function using the \texttt{bamlist} we prepared in the previous section. The returned \texttt{satac} object is a list of Granges with length 18 (2 of the 20 cells are filtered out) and will be used in following analysis.
+
+<<>>=      
+satac <- satacprocess(input=bamlist,type='bam',libsizefilter=1000)
+# Number of elements in satac
+length(satac)
+# Content in the first element as an example
+satac[[1]]
+@
+
+Users can also use a list of GRanges object as input to SCATE by specifying \texttt{type='gr'}, for example:
+<<eval=FALSE>>=      
+satac <- satacprocess(input=grlist,type='gr',libsizefilter=1000)
+@
+
+For the purpose of demonstration, we shorten the names of satac.
+<<>>=
+names(satac) <- sub('.*/','',names(satac))
+@
+
+\section{Cell Clustering (Optional)}
+
+SCATE has a built-in function \texttt{cellcluster} that clusters cells based on averaged signal of CRE clusters. The below example runs the \texttt{cellcluster} function using the \texttt{satac} object we generated in previous sections.
+
+<<>>=
+clusterres <- cellcluster(satac,genome="hg19",clunum=2,perplexity=5)
+@
+
+Here \texttt{genome} should be either "hg19" or "mm10". It indicates the genome to which the scATAC-seq data is aligned. \texttt{clunum} gives the number of clusters. If \texttt{clunum=NULL}, the cluster number will be determined automatically by the function. \texttt{perplexity} is a number specifying perplexity for tSNE. The default is 30. It should be reduced when sample size is small. For example here it is reduced to 5.
+
+The output of the function \texttt{cluster} has three components: tSNE results, clustering results and aggregated signal for CRE cluster:
+
+<<>>=
+# tSNE results
+tsne <- clusterres[[1]]
+head(tsne)
+# clustering results
+cluster <- clusterres[[2]]
+cluster
+# cell 'GSM1596840.bam' belongs to cluster 1, and cell 'SRR1779746.bam' belongs to cluster 2.
+# aggregated signal for CRE cluster
+aggsig <- clusterres[[3]]
+aggsig[1:3,1:3]
+@
+
+We can use the following code to draw the tSNE plot and mark the clusters.
+<<>>=      
+library(ggplot2)
+plotdata <- data.frame(tSNE1=tsne[,1],tSNE2=tsne[,2],Cluster=as.factor(cluster))
+ggplot(plotdata,aes(x=tSNE1,y=tSNE2,col=Cluster)) + geom_point()
+@
+
+\section{Run SCATE}
+
+The function \texttt{SCATE} will reconstruct signals for individual CREs. For example, below code performs SCATE using the scATAC-seq data and clustering results from the previous clustering step:
+<<>>=      
+res <- SCATE(satac,genome="hg19",cluster=cluster,clusterid=NULL,ncores=10,verbose=TRUE)
+# check the 10000-10005th row of the matrix
+res[10000:10005,]
+@
+
+If users only want to perform SCATE in a subset of clusters, they can set \texttt{clusterid} to be a subset of clusters. For example setting \texttt{clusterid=c(1,2)} will let SCATE to only run in cluster 1 and 2. \texttt{ncores} sets the number of computing cores to run SCATE in parallel. A larger number will result in less computational time, but will use more computational resources. If SCATE is run on a personal computer, ncores should be set to a small number such as 3. If \texttt{ncores=NULL}, all available cores will be used for computing. Note that currently ncores are forced to be 1 on Windows computers. If verbose is TRUE, the current progress will be displayed. If verbose is FALSE the information will be suppressed.
+
+The output is matrix of reconstructed signals. The number of rows of the matrix is the same as the number of bins in the genome. The number of columns is the same as the number of clusters in which SCATE is performed. The column names indicate the cluster id.
+
+Users can also supply their own cell cluster. An example can be seen below. \texttt{usercellcluster} specifies the cluster by users. Note that \texttt{usercellcluster} needs to be named to correspond with the list of GRanges.
+<<>>=
+# use similar ways to construct the cluster
+usercellcluster <- rep(1:2,each=9)
+names(usercellcluster) <- names(satac)
+# check the contents of the cluster
+usercellcluster
+@
+<<eval=FALSE>>=    
+userclusterres <- SCATE(satac,genome="hg19",cluster=usercellcluster)
+@
+
+Function \texttt{extractfeature} can be used to extract signals for a subset of genomic region of interest. For example if we want to extract signal for all bins that are within chromosome 5 50000-50300 and 50700-51000, we can first prepare the following region data:
+<<>>=
+region <- data.frame(chr=c('chr5','chr5'),start=c(50000,50700),end=c(50300,51000))
+region
+@
+
+Region is a data frame with three columns. First column is chromosome name, second column is starting position, and third column is the ending position.
+
+Function \texttt{extractfeature} is then called in this way. \texttt{mode} can be either 'overlap' to include all bins that overlap with the given \texttt{region}, or be 'nearest' to include the nearest bin for each region.
+<<>>=
+extractres <- extractfeature(res,region,mode='overlap')
+extractres
+@
+
+\texttt{extractfeature} also allows the extracted features to be saved to BED files that can be uploaded to genome browser (e.g. UCSC genome browser):
+
+<<eval=FALSE>>=
+extractres <- extractfeature(res,region,mode='overlap',folder='destination folder')
+@
+
+In this example, a set of BED files will be saved to destination folder. Each BED file corresponds to a cluster and has the signal and genomic location for each bin. The name of the BED file corresponds to the name of the cluster.
+
+\section{Peak Calling}
+
+The function \texttt{peakcall} will perform peak calling on the SCATE results. For example, we can call peaks for the first cluster:
+<<>>=      
+peakres <- peakcall(res)
+# check the result for the first cluster
+head(peakres[[1]])
+@
+
+For each cluster, the output is a data frame with five column. The first three columns tell the location of the peak. They are chromosome name, starting location and ending location respectively. The fourth column is the FDR of the peak, and the fifth column is the signal of the peak. Peaks are already ordered by FDR and then by signal.
+
+Use the following code to save the peak results for the first cluster as BED file.
+<<eval=FALSE>>=
+write.table(peakres[[1]],file='your file.bed',sep='\t',quote=F,col.names = F,row.names = F)
+@
+
+\section{Wrapper function}      
+The whole process of reading in bam, clustering cell, and performing SCATE is included in the \texttt{SCATEpipeline} function using following wrapper function of SCATE pipeline:
+<<eval=FALSE>>=    
+piperes <- SCATEpipeline(bamlist,genome="hg19",clunum=2,perplexity=5,ncores=10)
+# get the cell cluster results, same as calling 'cellcluster' function.
+cluster <- piperes[['cellcluster']]
+# get the SCATE outputs, same as calling 'SCATE' function.
+SCATEres <- piperes[['SCATE']]
+# get the peak calling results, same as calling 'peakcall' function.
+peakres <- piperes[['peak']]
+@
+
+As before, \texttt{bamlist} stores the locations to bam files and \texttt{genome} is 'hg19' or 'mm10'. The output is a list with three components. The first component is the cell clustering results, same as the one returned by \texttt{cellcluster}. The second component is the SCATE results, same as the one returned by \texttt{SCATE}. The third component is the peak calling results, same as the one returned by \texttt{peakcall}.
+
+One can extract the region using the \texttt{extractfeature}
+
+<<eval=FALSE>>=
+extractres <- extractfeature(piperes[['SCATE']],region,mode='overlap',folder='destination folder')
+@
+
+
+\section{Add new bulk samples or CRE to human and mouse databases}
+Users can add new bulk samples or CRE to human and mouse databases. This can be easily done with the following command:
+<<eval=FALSE>>=    
+makedatabase(datapath,savepath,bamfile=bamfile,cre=cre,genome='hg19')
+@
+
+Here, \texttt{datapath} is the path to the data package folder (e.g. myfolder/hg19/). User must first download the data package to use this function. The data package for hg19 and mm10 can be downloaded from http://jilab.biostat.jhsph.edu/projects/scate/hg19.zip or http://jilab.biostat.jhsph.edu/projects/scate/mm10.zip. The compressed file should be unzipped.
+
+\texttt{savepath} is the path to save the generated database. e.g. myfolder/database.rds.
+
+\texttt{bamfile} is the location of bulk DNase-seq bamfiles. The format is the same as \texttt{bamlist}
+
+\texttt{cre} is a dataframe of new CRE sites to be added to the database. First column: chromosome name. Second column: start position. Third column: end position. The format is the same as \texttt{region} argument in function \texttt{extractfeature}.
+
+\texttt{genome} should be either 'hg19' or 'mm10'. Default is 'hg19'.
+
+The function will generate a database file in 'savepath', which can then be passed to SCATE main function. See the manual page of SCATE function for how to include user's own database. The function will take around 1-2 days to finish.
+
+
+\section{Build database for new species}
+Users can also build database for scratch using bulk samples from a new species. This can be easily done with the following command:
+<<eval=FALSE>>=    
+makedatabase(datapath=NULL,savepath,bamfile=bamfile,cre=cre,genomerange=genomerange)
+@
+
+\texttt{savepath} is the path to save the generated database. e.g. myfolder/database.rds.
+
+\texttt{bamfile} is the location of bulk DNase-seq bamfiles. The format is the same as \texttt{bamlist}
+
+\texttt{cre} is a dataframe of new CRE sites to be added to the database. First column: chromosome name. Second column: start position. Third column: end position. The format is the same as \texttt{region} argument in function \texttt{extractfeature}.
+
+\texttt{genomerange} is a data frame with two columns. First column is the chromosome and second column is the length of the genome. Example is https://genome.ucsc.edu/goldenpath/help/hg19.chrom.sizes
+
+The function will generate a database file in 'savepath', which can then be passed to SCATE main function. See the manual page of SCATE function for how to include user's own database. The function will take around 1-2 days to finish.
+
+\section{Use database build by users in SCATE}
+Once the databases are built, users can run the whole pipeline with the new database:
+
+<<eval=FALSE>>=
+piperes <- SCATEpipeline(bamlist,datapath='path to new database')
+@
+
+The following code gives example of running each individual step with the new database. Note that the new database only needs to be specified in \texttt{cellcluster} and \texttt{SCATE}.
+<<eval=FALSE>>=
+clusterres <- cellcluster(satac,datapath='path to new database',clunum=2,perplexity=5)
+cluster <- clusterres[[2]]
+res <- SCATE(satac,datapath='path to new database',cluster=cluster,clusterid=NULL)
+@
+
+
+\section{Session Info}      
+<<eval=FALSE>>=
+sessionInfo()
+@
+
+\end{document}
+
+
