@@ -19,6 +19,7 @@
 #' @import GenomicAlignments parallel splines2 xgboost
 #' @author Zhicheng Ji, Weiqiang Zhou, Hongkai Ji <zji4@@zji4.edu>
 #' @examples
+#' set.seed(12345)
 #' SCATE(GRanges(seqnames="chr1",IRanges(start=seq_len(100)+1e6,end=seq_len(100)+1e8)),clunum=5000,type='reads',genome="mm10",addrowname=FALSE,ncores=10) # Reads as input, setting CRE cluster number as 5000 and addrowname=FALSE to increase speed
 #' \dontrun{
 #' SCATE(satac=data.frame(seqnames="chr1",start=seq_len(100)+1e6,end=seq_len(100)+1e8,count=1),clunum=5000,type='peaks',genome="mm10",addrowname=FALSE,ncores=10) # Peak as input, peakOverlapMethod=full

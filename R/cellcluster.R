@@ -75,6 +75,7 @@ cellcluster <- function(satac,type='reads',peakOverlapMethod = 'full',genome='hg
             cluster <- Mclust(tsne,G=clunum,prior = priorControl(),verbose=F)
       }
       cluster <- apply(cluster$z,1,which.max)
+      names(cluster) <- row.names(tsne)
       list(tsne=tsne,cluster=cluster,clusteraggregate=clusteraggregate)
 }
 
