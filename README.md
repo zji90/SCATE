@@ -50,8 +50,9 @@ If there is any problem with the installation process, please make sure you have
 Check the following page for PDF version of the user manual:
 https://github.com/zji90/SCATE/raw/master/inst/doc/SCATE.pdf
 
-Check below link for the Rnw version of the user manual. The code can be easily copied from the Rnw file.
-https://github.com/zji90/SCATE/blob/master/vignettes/SCATE.Rnw
+Check below link for the R code of the user manual.
+
+https://github.com/zji90/SCATE/blob/master/inst/doc/SCATE.R
 
 ## Contact the Author
 Author: Zhicheng Ji, Hongkai Ji
