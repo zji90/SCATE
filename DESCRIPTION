@@ -10,8 +10,8 @@ License: GPL(>=2)
 VignetteBuilder: knitr
 Encoding: UTF-8
 Remotes: bioc::3.8/GenomicAlignments
-Depends: GenomicAlignments, GenomicRanges, Rtsne, mclust, parallel,
-        preprocessCore, splines, splines2, xgboost, R(>= 2.10.0)
-RoxygenNote: 7.0.2
+Depends: knitr, GenomicAlignments, GenomicRanges, Rtsne, mclust, parallel,
+        preprocessCore, splines, splines2, xgboost
+RoxygenNote: 7.1.0
 NeedsCompilation: no
 Packaged: 2019-10-10 13:54:27 UTC; zhichengji

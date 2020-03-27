@@ -4,8 +4,14 @@
 \alias{makedatabase}
 \title{Make customized database}
 \usage{
-makedatabase(datapath, savepath, bamfile = NULL, cre = NULL,
-  genome = "hg19", genomerange = NULL)
+makedatabase(
+  datapath,
+  savepath,
+  bamfile = NULL,
+  cre = NULL,
+  genome = "hg19",
+  genomerange = NULL
+)
 }
 \arguments{
 \item{datapath}{path to the data package folder (e.g. myfolder/hg19/). User must first download the data package to use this function. The data package for hg19 and mm10 can be downloaded from http://jilab.biostat.jhsph.edu/projects/scate/hg19.zip or http://jilab.biostat.jhsph.edu/projects/scate/mm10.zip. The compressed file should be unzipped. If users do not want to use existing data compendium (e.g. to build a database in a new species), datapath should be set NULL, and 'genome' will be ignored.}

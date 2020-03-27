@@ -14,7 +14,6 @@
 #' peakcall(SCATE(GRanges(seqnames="chr1",IRanges(start=1:100+1e6,end=1:100+1e6)),clunum=5000,genome='mm10'))
 
 peakcall <- function(res,flank=1,fdrcut=1e-5) {
-      set.seed(12345)
       gr <- strsplit(row.names(res),'_')
       gr <- do.call(rbind,gr)
       gr <- GRanges(seqnames=gr[,1],IRanges(start=as.numeric(gr[,2]),end=as.numeric(gr[,3])))

@@ -16,7 +16,7 @@
 #' @author Zhicheng Ji, Weiqiang Zhou, Hongkai Ji <zji4@@zji4.edu>
 #' @examples
 #' set.seed(12345)
-#' f <- list.files(paste0(system.file(package="SCATE"),"/extdata/example"),full.names = T)
+#' f <- list.files(paste0(system.file(package="SCATE"),"/extdata/example"),full.names = TRUE)
 #' SCATEpipeline(f,genome="hg19",CREclunum=5000,perplexity=5)
 
 SCATEpipeline <- function(bamfile,genome='hg19',cellclunum=NULL,CREclunum=NULL,datapath=NULL,ncores=detectCores(),perplexity=30) {

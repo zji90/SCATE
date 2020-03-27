@@ -4,17 +4,31 @@
 \alias{cellcluster}
 \title{Cell clustering}
 \usage{
-cellcluster(satac, genome, clunum = NULL, perplexity = 30,
-  datapath = NULL)
+cellcluster(
+  satac,
+  type = "reads",
+  peakOverlapMethod = "full",
+  genome = "hg19",
+  clunum = NULL,
+  perplexity = 30,
+  filtervar = TRUE,
+  datapath = NULL
+)
 }
 \arguments{
-\item{satac}{GRanges object or list of GRanges object of scATAC-seq reads. The GRanges should be the middle point of the reads with length of 1 base pair. Use 'satacprocess' to preprocess raw reads.}
+\item{satac}{If type='reads', satac should be a list of GRanges object of scATAC-seq reads. Each element corresponds to one single cell. The GRanges should be the middle point of the reads with length of 1 base pair. Use 'satacprocess' to preprocess raw reads. If type='peaks', satac should be a list of data frames of scATAC-seq peaks. For each data frame, first column is chromsome name, second column is start site, third column is end site, and fourth column is the number of reads of the peak.}
+
+\item{type}{Character variable of either 'reads' or 'peaks'.}
+
+\item{peakOverlapMethod}{Character variable of either 'full' or 'middle'. Only effective when type = 'peaks'. If peakOverlapMethod='full', then the full range of the peak will be used to find overlap with bins, and all bins overlapping with this peak will be assigned the read counts of this peak. If peakOverlapMethod='middle', only the middle base pair of the peak will be used to find overlap with bins.}
 
 \item{genome}{Character variable of either "hg19" or "mm10".}
 
 \item{clunum}{Numeric variable giving the number of clusters. If NULL the cluster number will be determined automatically}
 
 \item{perplexity}{Numeric variable specifying perplexity for tSNE. Reduce perplexity when sample size is small.}
+
+\item{filtervar}{If TRUE, filter out features with low variability.}
 
 \item{datapath}{Character variable of the path to the customized database (eg myfolder/database.rds). The database can be made using 'makedatabase' function. If not null, 'genome' is ignored.}
 }
@@ -28,8 +42,11 @@ Perform Cell Clustering
 This function generates averaged signals for CRE clusters and cluster cells.
 }
 \examples{
-cellcluster(list(cell1=GRanges(seqnames="chr1",IRanges(start=1:100+1e6,end=1:100+1e6)),cell2=GRanges(seqnames="chr2",IRanges(start=1:100+1e6,end=1:100+1e6))),genome="hg19")
+set.seed(12345)
+celldata <- sapply(1:50,function(i) {pos <- sample(1:1e9,50000); GRanges(seqnames=sample(paste0("chr",1:20),50000,replace=T),IRanges(start=pos,end=pos))})
+names(celldata) <- paste0('cell',1:50)
+cellcluster(celldata,type='reads',genome="hg19",filtervar=FALSE,perplexity=1,clunum=3) # reads as input
 }
 \author{
-Zhicheng Ji, Weiqiang Zhou, Hongkai Ji <zji4@zji4.edu>
+Zhicheng Ji, Weiqiang Zhou, Wenpin Hou, Hongkai Ji <zji4@zji4.edu>
 }

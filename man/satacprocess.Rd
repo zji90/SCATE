@@ -23,7 +23,7 @@ Preprocessing scATAC-seq samples
 This function filters out scATAC-seq with low library size and transforms the reads into middle points of the reads.
 }
 \examples{
-satacprocess(list(cell1=GRanges(seqnames="chr1",IRanges(start=1:100+1e6,end=1:100+1e6)),cell2=GRanges(seqnames="chr2",IRanges(start=1:100+1e6,end=1:100+1e6))),libsizefilter=10)
+satacprocess(list(cell1=GRanges(seqnames="chr1",IRanges(start=1:100+1e6,end=1:100+1e6)),cell2=GRanges(seqnames="chr2",IRanges(start=1:100+1e6,end=1:100+1e6))),type='gr',libsizefilter=10)
 }
 \author{
 Zhicheng Ji, Weiqiang Zhou, Hongkai Ji <zji4@zji4.edu>

@@ -4,17 +4,33 @@
 \alias{SCATE}
 \title{Perform SCATE}
 \usage{
-SCATE(satac, genome = "hg19", cluster = NULL, clusterid = NULL,
-  datapath = NULL, ncores = detectCores(), verbose = F)
+SCATE(
+  satac,
+  type = "reads",
+  peakOverlapMethod = "full",
+  genome = "hg19",
+  cluster = NULL,
+  clusterid = NULL,
+  clunum = NULL,
+  datapath = NULL,
+  ncores = detectCores(),
+  verbose = TRUE
+)
 }
 \arguments{
-\item{satac}{GRanges object or list of GRanges object of scATAC-seq reads. The GRanges should be the middle point of the reads with length of 1 base pair. Use 'satacprocess' to preprocess raw reads.}
+\item{satac}{If type='reads', satac should be a GRanges object or list of GRanges object of scATAC-seq reads. Each element corresponds to one single cell. The GRanges should be the middle point of the reads with length of 1 base pair. Use 'satacprocess' to preprocess raw reads. If type='peaks', satac should be a data frame or list of data frames of scATAC-seq peaks. For each data frame, first column is chromsome name, second column is start site, third column is end site, and fourth column is the number of reads of the peak.}
+
+\item{type}{Character variable of either 'reads' or 'peaks'.}
+
+\item{peakOverlapMethod}{Character variable of either 'full' or 'middle'. Only effective when type = 'peaks'. If peakOverlapMethod='full', then the full range of the peak will be used to find overlap with bins, and all bins overlapping with this peak will be assigned the read counts of this peak. If peakOverlapMethod='middle', only the middle base pair of the peak will be used to find overlap with bins.}
 
 \item{genome}{Character variable of either "hg19" or "mm10". Default is 'hg19'.}
 
 \item{cluster}{Numeric vector specifying the cluster of cells. Needs to be named and include all cells in satac. If NULL, SCATE will be run on all cells in satac.}
 
 \item{clusterid}{Numeric number specifying the single cluster to run SCATE. If NULL SCATE will be run on all clusters. Ignored if cluster is NULL. The cluster id must be included in variable 'cluster'.}
+
+\item{clunum}{Numeric value specifying number of CRE clusters. If NULL, SCATE automatically chooses number of CRE clusters.}
 
 \item{datapath}{Character variable of the path to the customized database (eg myfolder/database.rds). The database can be made using 'makedatabase' function. If not null, 'genome' is ignored.}
 
@@ -32,7 +48,12 @@ Single-cell ATAC-seq signal Extration and Enhancement
 This function takes as input the scATAC-seq reads and generates enhanced signals. Users can either perform SCATE on clusters of cells or a single group of cells.
 }
 \examples{
-SCATE(GRanges(seqnames="chr1",IRanges(start=1:100+1e6,end=1:100+1e6)),genome="hg19")
+set.seed(12345)
+SCATE(GRanges(seqnames="chr1",IRanges(start=seq_len(100)+1e6,end=seq_len(100)+1e8)),clunum=5000,type='reads',genome="mm10",ncores=10) # Reads as input, setting CRE cluster number as 5000 to increase speed
+\dontrun{
+SCATE(satac=data.frame(seqnames="chr1",start=seq_len(100)+1e6,end=seq_len(100)+1e8,count=1),clunum=5000,type='peaks',genome="mm10",ncores=10) # Peak as input, peakOverlapMethod=full
+SCATE(satac=data.frame(seqnames="chr1",start=seq_len(100)+1e6,end=seq_len(100)+1e6,count=1),clunum=5000,type='peaks',peakOverlapMethod='middle',genome="mm10",ncores=10) # Peak as input, peakOverlapMethod=middle
+}
 }
 \author{
 Zhicheng Ji, Weiqiang Zhou, Hongkai Ji <zji4@zji4.edu>

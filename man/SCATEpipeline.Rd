@@ -4,15 +4,24 @@
 \alias{SCATEpipeline}
 \title{SCATE Pipeline}
 \usage{
-SCATEpipeline(bamfile, genome = "hg19", clunum = NULL,
-  datapath = NULL, ncores = detectCores(), perplexity = 30)
+SCATEpipeline(
+  bamfile,
+  genome = "hg19",
+  cellclunum = NULL,
+  CREclunum = NULL,
+  datapath = NULL,
+  ncores = detectCores(),
+  perplexity = 30
+)
 }
 \arguments{
 \item{bamfile}{Character vector of bam files to be processed}
 
 \item{genome}{Character variable of either "hg19" or "mm10".}
 
-\item{clunum}{Numeric variable giving the number of clusters. If NULL the cluster number will be determined automatically}
+\item{cellclunum}{Numeric variable giving the number of cell clusters when clustering cells. If NULL the cluster number will be determined automatically.}
+
+\item{CREclunum}{Numeric variable giving the number of CRE clusters when running SCATE. If NULL the cluster number will be determined automatically.}
 
 \item{datapath}{Character variable of the path to the customized database (eg myfolder/database.rds). The database can be made using 'makedatabase' function. If not null, 'genome' is ignored.}
 
@@ -30,8 +39,9 @@ SCATE pipeline of reading in bam, clustering cell, and performing SCATE
 This function takes as input a list of bam files. It then read in the bam files, cluster cells, and performs SCATE for each cell cluster
 }
 \examples{
+set.seed(12345)
 f <- list.files(paste0(system.file(package="SCATE"),"/extdata/example"),full.names = T)
-SCATEpipeline(f,genome="hg19",perplexity=5)
+SCATEpipeline(f,genome="hg19",CREclunum=5000,perplexity=5)
 }
 \author{
 Zhicheng Ji, Weiqiang Zhou, Hongkai Ji <zji4@zji4.edu>

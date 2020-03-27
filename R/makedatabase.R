@@ -15,7 +15,6 @@
 
 makedatabase <- function(datapath,savepath,bamfile=NULL,cre=NULL,genome='hg19',genomerange=NULL) {
       
-      suppressMessages(library(GenomicAlignments))
       
       if (is.null(datapath)) {
             
@@ -152,7 +151,6 @@ makedatabase <- function(datapath,savepath,bamfile=NULL,cre=NULL,genome='hg19',g
       data <- scalematrix(norm)
       data <- round(data,digits=4)
       
-      library(ClusterR)
       oriclu <- kmeans(data,5000)$cluster
       
       splitclu <- lapply(1:max(oriclu),function(cid) {
