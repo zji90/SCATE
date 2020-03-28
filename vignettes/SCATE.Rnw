@@ -186,8 +186,8 @@ extractres <- extractfeature(piperes[['SCATE']],region,mode='overlap',folder='de
 @
 
 
-\section{Add new bulk samples or CRE to human and mouse databases}
-Users can add new bulk samples or CRE to human and mouse databases. This can be easily done with the following command:
+\section{Add new bulk samples or CRE to human and mouse databases (BDDB + User data)}
+Users can add new bulk samples or CRE to human and mouse databases. This can be done with the following command. Note: the function may take around 1-2 days to finish.
 <<eval=FALSE>>=    
 makedatabase(datapath,savepath,bamfile=bamfile,cre=cre,genome='hg19')
 @
@@ -202,11 +202,11 @@ Here, \texttt{datapath} is the path to the data package folder (e.g. myfolder/hg
 
 \texttt{genome} should be either 'hg19' or 'mm10'. Default is 'hg19'.
 
-The function will generate a database file in 'savepath', which can then be passed to SCATE main function. See the manual page of SCATE function for how to include user's own database. The function will take around 1-2 days to finish.
+The function will generate a database file in 'savepath', which can then be passed to SCATE main function. See the manual page of SCATE function for how to include user's own database. 
 
 
-\section{Build database from scratch}
-Users can also build database from scratch using bulk samples or pooled single-cell ATAC-seq samples (pseudobulks). This can be easily done with the following command:
+\section{Build database from scratch (User data)}
+Users can also build database from scratch using bulk samples or pooled single-cell ATAC-seq samples (pseudobulks) provided by users. This can be done with the following command:
 <<eval=FALSE>>=    
 makedatabase(datapath=NULL,savepath,bamfile=bamfile,cre=cre,genomerange=genomerange)
 @
