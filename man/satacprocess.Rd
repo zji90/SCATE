@@ -4,12 +4,14 @@
 \alias{satacprocess}
 \title{Preprocess scATAC-seq}
 \usage{
-satacprocess(input, type = "bam", libsizefilter = 1000)
+satacprocess(input, type = "bam", pairsingle = "paired", plibsizefilter = 1000)
 }
 \arguments{
 \item{input}{Either a character vector of locations to bam files (when type is bam) or list of GRanges object of scATAC-seq reads (when type is gr).}
 
 \item{type}{Either 'bam' or 'gr'. 'bam' if the input is locations to bam files. 'gr' if the input is a list of GRanges object.}
+
+\item{pairsingle}{Either 'paired' or 'single'. Specify whether the bam file is single- or paired-end. Only works when type='bam'.}
 
 \item{libsizefilter}{Numeric variable giving the minimum library size. scATAC-seq samples with library size smaller than this cutoff will be discarded.}
 }

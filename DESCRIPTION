@@ -12,6 +12,6 @@ Encoding: UTF-8
 Remotes: bioc::3.8/GenomicAlignments
 Depends: knitr, GenomicAlignments, GenomicRanges, Rtsne, mclust, parallel,
         preprocessCore, splines, splines2, xgboost
-RoxygenNote: 7.1.0
+RoxygenNote: 7.1.1
 NeedsCompilation: no
 Packaged: 2019-10-10 13:54:27 UTC; zhichengji
