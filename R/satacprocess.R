@@ -14,7 +14,7 @@
 #' @examples
 #' satacprocess(list(cell1=GRanges(seqnames="chr1",IRanges(start=1:100+1e6,end=1:100+1e6)),cell2=GRanges(seqnames="chr2",IRanges(start=1:100+1e6,end=1:100+1e6))),type='gr',libsizefilter=10)
 
-satacprocess <- function(input,type='bam',pairsingle='paired',plibsizefilter=1000) {
+satacprocess <- function(input,type='bam',pairsingle='paired',libsizefilter=1000) {
       if (type=='bam') {
             if (pairsingle=='paired') {
                   satac <- sapply(sapply(input,readGAlignmentPairs),GRanges)      
